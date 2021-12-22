@@ -16,6 +16,8 @@
   Since mx25l12873f is on QPI mode by default according to its data sheet, and arduino 
   series only support 1 I/0 SPI mode, we need to first turn the chip into 1 I/0 mode.
 */
+
+
 void resetQPI()
 {
   // Init pins
@@ -51,52 +53,76 @@ void resetQPI()
 
 
 
-//Prints hex/dec formatted data from page reads - for debugging
-void _printPageBytes(uint8_t *data_buffer, uint8_t outputType) {
-  char buffer[10];
-  for (int a = 0; a < 16; ++a) {
-    for (int b = 0; b < 16; ++b) {
-      if (outputType == 1) {
-        sprintf(buffer, "%02x", data_buffer[a * 16 + b]);
-        Serial.print(buffer);
-      }
-      else if (outputType == 2) {
-        uint8_t x = data_buffer[a * 16 + b];
-        if (x < 10) Serial.print("0");
-        if (x < 100) Serial.print("0");
-        Serial.print(x);
-        Serial.print(',');
-      }
-    }
-    Serial.println();
-  }
+void arduino_println(char* c)
+{
+  Serial.print("Arduino:");
+  Serial.println(c);
 }
 
+void read_flash(SPIFlash&);
+
 void setup() {
+  
   Serial.begin(115200);
-  Serial.println("Waiting for commands");
-  while(!Serial.available());
-  Serial.println("Executing");
+  arduino_println("Press any key to reset QPI");
+  // Waiting for user input
+  int8_t c = Serial.read();
+  while(c == -1) {
+    c = Serial.read();
+  }
   
   resetQPI();
-
+  
   static SPIFlash flash;
   flash.begin();
 
-  // Read entire flash memory and print
-  Serial.println("Reading all pages");
-  uint8_t data_buffer[256];
-
-  uint32_t maxAddr = flash.getCapacity();
-  Serial.print("maxAddr: ");
-  Serial.println(maxAddr);
-  for(int a = 0; a < maxAddr; ++a) {
-    flash.readByteArray(a, &data_buffer[0], 256);
-    _printPageBytes(data_buffer, 1);
-    delay(100);
+  // Clear Serial buffer
+  c = Serial.read();
+  while(c != -1){
+    c = Serial.read();
   }
+
+  arduino_println("Please enter command:");
+  arduino_println("1: Read flash out");
+  arduino_println("2: Write flash from file");
+
+  c = Serial.read();
+  while(c == -1){
+    c = Serial.read();
+  }
+  if(c == '1'){
+    arduino_println("Read flash");
+    read_flash(flash);
+  }
+  else{
+    arduino_println("Write flash");
+  }
+//  // Read entire flash memory and print
+//  Serial.println("Reading all pages");
+//  uint8_t data_buffer[256];
+//
+//  uint32_t maxAddr = flash.getCapacity();
+//  Serial.print("maxAddr: ");
+//  Serial.println(maxAddr);
+//  for(int a = 0; a < maxAddr; ++a) {
+//    flash.readByteArray(a, &data_buffer[0], 256);
+//    _printPageBytes(data_buffer, 1);
+//    delay(100);
+//  }
 }
 
 void loop() {
   
+}
+
+void read_flash(SPIFlash& flash) {
+// Read entire chip and send binary data to serial
+  
+  uint8_t data_buffer[256];
+  uint32_t maxAddr = flash.getCapacity();
+  Serial.println(maxAddr);
+  for(int a = 0; a < maxAddr; a+=256) {
+    flash.readByteArray(a, &data_buffer[0],256);
+    Serial.write(&data_buffer[0], 256);
+  }
 }
