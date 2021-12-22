@@ -1,14 +1,6 @@
 import serial
+import os
 
-# with serial.Serial('/dev/ttyUSB0', 115200) as ser:
-#     ser.write(b'c')
-#     r = ser.read(2)
-#     print(int.from_bytes(r, "big"))
-# with open('test.txt', 'wb') as f:
-#     f.write(r)
-#
-# with open('test.txt', 'rb') as f:
-#     print(f.read())
 with serial.Serial('/dev/ttyUSB0', 115200) as ser:
     startInfo = ser.readline()
     print(startInfo.decode("utf-8"))
@@ -40,4 +32,22 @@ with serial.Serial('/dev/ttyUSB0', 115200) as ser:
         with open('bios2.dat', 'wb') as f:
             f.write(bios)
         print("Write file finished")
+
+    elif (c == '2') :
+        # Write bios from file
+        fileloc = input("Please enter bios file name:")
+        with open(fileloc, 'rb') as f:
+            filesize = os.path.getsize(fileloc)
+            print("File size in bytes: ", filesize)
+            ser.write(filesize.to_bytes(4, byteorder='big'))
+            # Test returned max addr
+            print(ser.readline().decode('utf-8'))
+
+            i = 0
+            while(i < filesize):
+                databuf = f.read(256)
+                ser.write(databuf)
+                i += 256
+                print(i)
+            print(ser.readline().decode('utf-8'))
 

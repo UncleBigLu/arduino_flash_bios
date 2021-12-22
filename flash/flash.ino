@@ -60,6 +60,7 @@ void arduino_println(char* c)
 }
 
 void read_flash(SPIFlash&);
+void write_flash(SPIFlash&);
 
 void setup() {
   
@@ -96,6 +97,9 @@ void setup() {
   }
   else{
     arduino_println("Write flash");
+    // Waiting for data
+    while(!Serial.available());
+    write_flash(flash);
   }
 //  // Read entire flash memory and print
 //  Serial.println("Reading all pages");
@@ -125,4 +129,19 @@ void read_flash(SPIFlash& flash) {
     flash.readByteArray(a, &data_buffer[0],256);
     Serial.write(&data_buffer[0], 256);
   }
+}
+
+void write_flash(SPIFlash& flash) {
+  uint32_t maxAddr = 0;
+  uint8_t size_buffer[4];
+  Serial.readBytes(size_buffer, 4);
+  maxAddr = 0x0000 | (size_buffer[0]) | (size_buffer[1] << 8) | (size_buffer[2] << 16) | (size_buffer[3] << 24);
+  Serial.println(maxAddr);
+  
+  uint8_t data_buffer[256];
+  for(int i = 0; i < maxAddr; i += 256) {
+    Serial.readBytes(data_buffer, 256);
+    flash.writeByteArray(i, &data_buffer[0], 256);
+  }
+  Serial.println("Write finished");
 }
