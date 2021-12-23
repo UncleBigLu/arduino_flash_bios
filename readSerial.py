@@ -38,11 +38,17 @@ with serial.Serial('/dev/ttyUSB0', 115200) as ser:
         fileloc = input("Please enter bios file name:")
         with open(fileloc, 'rb') as f:
             filesize = os.path.getsize(fileloc)
+            # Send file size
             print("File size in bytes: ", filesize)
             ser.write(filesize.to_bytes(4, byteorder='big'))
-            # Test returned max addr
+
             print(ser.readline().decode('utf-8'))
 
+            print("Waiting for erase chip....")
+            print(ser.readline().decode('utf-8'))
+
+
+            # Send file content
             i = 0
             while(i < filesize):
                 databuf = f.read(256)

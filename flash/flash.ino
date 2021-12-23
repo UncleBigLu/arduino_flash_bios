@@ -135,9 +135,19 @@ void write_flash(SPIFlash& flash) {
   uint32_t maxAddr = 0;
   uint8_t size_buffer[4];
   Serial.readBytes(size_buffer, 4);
-  maxAddr = 0x0000 | (size_buffer[0]) | (size_buffer[1] << 8) | (size_buffer[2] << 16) | (size_buffer[3] << 24);
+  maxAddr = 0x0000 | ((uint32_t)size_buffer[3]) | ((uint32_t)size_buffer[2] << 8) | ((uint32_t)size_buffer[1] << 16) | ((uint32_t)size_buffer[0] << 24);
+
   Serial.println(maxAddr);
   
+  // Erase chip
+  if(flash.eraseChip())
+    Serial.println("success");
+  else
+  {
+    Serial.println("fail");
+    return;
+  }
+    
   uint8_t data_buffer[256];
   for(int i = 0; i < maxAddr; i += 256) {
     Serial.readBytes(data_buffer, 256);
